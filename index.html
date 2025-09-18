@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Guinea Pig Clicker</title>
+  <style>
+    body {
+      font-family: 'Comic Sans MS', cursive;
+      background-color: tan;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      height: 100vh;
+    }
+
+    #game {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #shop {
+      flex: 1;
+      background-color: #f0d9b5;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      color: #6b4226;
+    }
+
+    #counter {
+      font-size: 2em;
+      margin: 20px;
+    }
+
+    #clickButton {
+      background-color: orange;
+      color: white;
+      font-size: 1.5em;
+      padding: 20px 40px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-bottom: 20px;
+      transition: transform 0.1s ease;
+    }
+
+    #clickButton:active {
+      transform: scale(0.95);
+    }
+
+    .upgrade-btn {
+      background-color: #f7c59f;
+      border: none;
+      padding: 10px;
+      font-size: 1em;
+      margin: 10px 0;
+      cursor: pointer;
+      width: 100%;
+      border-radius: 5px;
+    }
+
+    .upgrade-btn:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    #rebirthBtn {
+      background-color: #b5651d;
+      color: white;
+      font-size: 1em;
+      margin-top: 20px;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #rebirthInfo {
+      font-size: 0.9em;
+      margin-top: 10px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="game">
+    <h1>🐹 Guinea Pig Clicker</h1>
+    <p id="counter">Guinea Pigs: 0</p>
+    <button id="clickButton">Guinea Pig</button>
+    <button id="rebirthBtn">Rebirth</button>
+    <div id="rebirthInfo">Rebirth resets progress for +1x multiplier (need 1,000 Guinea Pigs)</div>
+  </div>
+
+  <div id="shop">
+    <h2>Upgrades</h2>
+    <button class="upgrade-btn" id="autoClickerBtn">Auto Clicker (50 GP)</button>
+    <button class="upgrade-btn" id="doubleClickBtn">Double Click Power (100 GP)</button>
+    <button class="upgrade-btn" id="tripleClickBtn">Triple Click Power (500 GP)</button>
+    <button class="upgrade-btn" id="farmBtn">Guinea Pig Farm (+5/sec) (1000 GP)</button>
+  </div>
+
+  <audio id="bgSound" loop autoplay>
+    <source src="https://www.fesliyanstudios.com/play-mp3/6515" type="audio/mpeg">
+  </audio>
+
+  <script>
+    let guineaPigs = 0;
+    let clickPower = 1;
+    let gps = 0; // guinea pigs per second
+    let autoClickers = 0;
+    let farms = 0;
+    let multiplier = 1;
+
+    const counter = document.getElementById('counter');
+    const clickButton = document.getElementById('clickButton');
+    const autoClickerBtn = document.getElementById('autoClickerBtn');
+    const doubleClickBtn = document.getElementById('doubleClickBtn');
+    const tripleClickBtn = document.getElementById('tripleClickBtn');
+    const farmBtn = document.getElementById('farmBtn');
+    const rebirthBtn = document.getElementById('rebirthBtn');
+
+    const bgSound = document.getElementById('bgSound');
+    bgSound.volume = 0.2;
+
+    function updateUI() {
+      counter.textContent = `Guinea Pigs: ${Math.floor(guineaPigs)}`;
+    }
+
+    clickButton.addEventListener('click', () => {
+      guineaPigs += clickPower * multiplier;
+      updateUI();
+    });
+
+    autoClickerBtn.addEventListener('click', () => {
+      const cost = 50;
+      if (guineaPigs >= cost) {
+        guineaPigs -= cost;
+        autoClickers += 1;
+        updateUI();
+      }
+    });
+
+    doubleClickBtn.addEventListener('click', () => {
+      const cost = 100;
+      if (guineaPigs >= cost) {
+        guineaPigs -= cost;
+        clickPower *= 2;
+        updateUI();
+      }
+    });
+
+    tripleClickBtn.addEventListener('click', () => {
+      const cost = 500;
+      if (guineaPigs >= cost) {
+        guineaPigs -= cost;
+        clickPower *= 3;
+        updateUI();
+      }
+    });
+
+    farmBtn.addEventListener('click', () => {
+      const cost = 1000;
+      if (guineaPigs >= cost) {
+        guineaPigs -= cost;
+        farms += 1;
+        updateUI();
+      }
+    });
+
+    rebirthBtn.addEventListener('click', () => {
+      if (guineaPigs >= 1000) {
+        guineaPigs = 0;
+        autoClickers = 0;
+        farms = 0;
+        gps = 0;
+        clickPower = 1;
+        multiplier += 1;
+        alert(`Rebirth successful! Multiplier is now x${multiplier}`);
+        updateUI();
+      } else {
+        alert("You need at least 1,000 Guinea Pigs to Rebirth!");
+      }
+    });
+
+    // Auto collect loop
+    setInterval(() => {
+      gps = autoClickers * 1 + farms * 5;
+      guineaPigs += gps * multiplier;
+      updateUI();
+    }, 1000);
+  </script>
+
+</body>
+</html>
