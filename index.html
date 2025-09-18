@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Guinea Pig Clicker</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      background: #fffbe6;
+      color: #333;
+      padding-bottom: 50px;
+    }
+
+    h1 {
+      margin-top: 30px;
+    }
+
+    #click-area {
+      margin: 20px;
+    }
+
+    #guinea-pig {
+      width: 200px;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    #guinea-pig:active {
+      transform: scale(0.95);
+    }
+
+    #upgrades, #achievements {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .upgrade, .achievement {
+      background: #e8f0ff;
+      border-radius: 8px;
+      padding: 10px;
+      margin: 5px;
+      width: 300px;
+    }
+
+    .upgrade.locked {
+      background-color: #ccc;
+      color: #999;
+    }
+
+    .achievement.unlocked {
+      background-color: #d4edda;
+    }
+
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #prestige-btn {
+      background: gold;
+    }
+
+    #prestige-btn:hover {
+      background: orange;
+    }
+
+    #rebirth-btn {
+      background: #ff66c4;
+      color: white;
+    }
+
+    #rebirth-btn:hover {
+      background: #ff3399;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🐹 Guinea Pig Clicker 🐹</h1>
+  <div id="clicks">Clicks: 0</div>
+
+  <div id="click-area">
+    <img id="guinea-pig" src="https://upload.wikimedia.org/wikipedia/commons/3/37/Guinea_Pig_in_cape.jpg" alt="Guinea Pig">
+  </div>
+
+  <h2>Upgrades</h2>
+  <div id="upgrades"></div>
+
+  <h2>Achievements</h2>
+  <div id="achievements"></div>
+
+  <button id="prestige-btn">Prestige</button>
+  <button id="rebirth-btn">Rebirth</button>
+
+  <!-- Sounds -->
+  <audio id="click-sound" src="https://www.myinstants.com/media/sounds/minecraft_click.mp3" preload="auto"></audio>
+  <audio id="upgrade-sound" src="https://www.myinstants.com/media/sounds/collectcoin.mp3" preload="auto"></audio>
+
+  <script>
+    let clicks = Number(localStorage.getItem("clicks")) || 0;
+    let clickPower = Number(localStorage.getItem("clickPower")) || 1;
+    let autoClickers = Number(localStorage.getItem("autoClickers")) || 0;
+    let prestigeLevel = Number(localStorage.getItem("prestigeLevel")) || 0;
+    let hasRebirthed = JSON.parse(localStorage.getItem("hasRebirthed")) || false;
+
+    const clickDisplay = document.getElementById("clicks");
+    const guineaPigImg = document.getElementById("guinea-pig");
+    const upgradesDiv = document.getElementById("upgrades");
+    const achievementsDiv = document.getElementById("achievements");
+    const clickSound = document.getElementById("click-sound");
+    const upgradeSound = document.getElementById("upgrade-sound");
+    const prestigeBtn = document.getElementById("prestige-btn");
+    const rebirthBtn = document.getElementById("rebirth-btn");
+
+    const upgrades = [
+      { name: "Stronger Paw (x2)", cost: 50, effect: () => clickPower *= 2, unlock: 25 },
+      { name: "Auto-Clicker (+1/sec)", cost: 100, effect: () => autoClickers += 1, unlock: 50 },
+      { name: "Golden Haystack (x5)", cost: 500, effect: () => clickPower *= 5, unlock: 200 },
+      { name: "Super Auto-Clicker (+10/sec)", cost: 1000, effect: () => autoClickers += 10, unlock: 500 },
+      { name: "Guinea Gym (x10)", cost: 5000, effect: () => clickPower *= 10, unlock: 2000 },
+      { name: "Hyper Clicker (+100/sec)", cost: 10000, effect: () => autoClickers += 100, unlock: 7000 },
+      { name: "Turbo Paw (x50)", cost: 50000, effect: () => clickPower *= 50, unlock: 25000 },
+      { name: "Guinea Pig Army (+500/sec)", cost: 100000, effect: () => autoClickers += 500, unlock: 50000 }
+    ];
+
+    const achievements = [
+      { name: "First Click!", condition: () => clicks >= 1 },
+      { name: "100 Clicks!", condition: () => clicks >= 100 },
+      { name: "Click Master (1,000)", condition: () => clicks >= 1000 },
+      { name: "Auto Army", condition: () => autoClickers >= 10 },
+      { name: "Clickzilla", condition: () => clickPower >= 100 },
+      { name: "Prestige Unlocked!", condition: () => prestigeLevel >= 1 },
+      { name: "Rebirth Complete!", condition: () => hasRebirthed }
+    ];
+
+    function saveGame() {
+      localStorage.setItem("clicks", clicks);
+      localStorage.setItem("clickPower", clickPower);
+      localStorage.setItem("autoClickers", autoClickers);
+      localStorage.setItem("prestigeLevel", prestigeLevel);
+      localStorage.setItem("hasRebirthed", JSON.stringify(hasRebirthed));
+    }
+
+    function animateClick() {
+      guineaPigImg.style.transform = "scale(0.95)";
+      setTimeout(() => guineaPigImg.style.transform = "scale(1)", 100);
+    }
+
+    function updateGuineaPigImage() {
+      if (clickPower >= 100 || autoClickers >= 100) {
+        guineaPigImg.src = "https://upload.wikimedia.org/wikipedia/commons/6/64/Guinea_Pig_close_up.jpg";
+      } else {
+        guineaPigImg.src = "https://upload.wikimedia.org/wikipedia/commons/3/37/Guinea_Pig_in_cape.jpg";
+      }
+    }
+
+    guineaPigImg.addEventListener("click", () => {
+      clicks += clickPower + prestigeLevel;
+      clickSound.play();
+      animateClick();
+      updateGame();
+    });
+
+    function renderUpgrades() {
+      upgradesDiv.innerHTML = "";
+      upgrades.forEach((upg, i) => {
+        if (clicks >= upg.unlock || localStorage.getItem(`upgrade${i}`)) {
+          const div = document.createElement("div");
+          div.className = "upgrade";
+          if (localStorage.getItem(`upgrade${i}`)) {
+            div.textContent = `${upg.name} ✅`;
+            div.classList.add("locked");
+          } else if (clicks >= upg.cost) {
+            div.textContent = `${upg.name} - ${upg.cost} clicks`;
+            div.onclick = () => buyUpgrade(i);
+          } else {
+            div.textContent = `${upg.name} - ${upg.cost} clicks`;
+            div.classList.add("locked");
+          }
+          upgradesDiv.appendChild(div);
+        }
+      });
+    }
+
+    function buyUpgrade(index) {
+      const upg = upgrades[index];
+      if (clicks >= upg.cost && !localStorage.getItem(`upgrade${index}`)) {
+        clicks -= upg.cost;
+        upg.effect();
+        localStorage.setItem(`upgrade${index}`, "bought");
+        upgradeSound.play();
+        updateGuineaPigImage();
+        updateGame();
+      }
+    }
+
+    function renderAchievements() {
+      achievementsDiv.innerHTML = "";
+      achievements.forEach((ach, i) => {
+        const achieved = ach.condition();
+        const div = document.createElement("div");
+        div.className = "achievement";
+        if (achieved) div.classList.add("unlocked");
+        div.textContent = achieved ? `🏆 ${ach.name}` : `🔒 ???`;
+        achievementsDiv.appendChild(div);
+      });
+    }
+
+    prestigeBtn.onclick = () => {
+      if (clicks >= 10000) {
+        prestigeLevel += 1;
+        clicks = 0;
+        clickPower = 1;
+        autoClickers = 0;
+        upgrades.forEach((_, i) => localStorage.removeItem(`upgrade${i}`));
+        saveGame();
+        alert(`Prestiged! 🎉 You're now Prestige Level ${prestigeLevel}`);
+        updateGame();
+      } else {
+        alert("You need at least 10,000 clicks to Prestige!");
+      }
+    };
+
+    rebirthBtn.onclick = () => {
+      const REBIRTH_COST = 15000000000000; // 15 trillion
+      if (clicks >= REBIRTH_COST && !hasRebirthed) {
+        if (confirm("Are you sure you want to Rebirth? This resets EVERYTHING, but makes you stronger!")) {
+          clicks = 0;
+          clickPower = 2;
+          autoClickers = 1;
+          prestigeLevel = 0;
+          hasRebirthed = true;
+          upgrades.forEach((_, i) => localStorage.removeItem(`upgrade${i}`));
+          localStorage.removeItem("clicks");
+          localStorage.removeItem("clickPower");
+          localStorage.removeItem("autoClickers");
+          localStorage.removeItem("prestigeLevel");
+          saveGame();
+          alert("✨ Rebirth complete! You've started over stronger.");
+          updateGame();
+        }
+      } else if (hasRebirthed) {
+        alert("You've already rebirthed.");
+      } else {
+        alert("You need 15 trillion clicks to Rebirth.");
+      }
+    };
+
+    setInterval(() => {
+      clicks += autoClickers + prestigeLevel;
+      updateGame();
+    }, 1000);
+
+    function updateGame() {
+      clickDisplay.textContent = `Clicks: ${clicks.toLocaleString()} | Prestige: ${prestigeLevel}`;
+      renderUpgrades();
+      renderAchievements();
+      updateGuineaPigImage();
+      saveGame();
+      rebirthBtn.disabled = hasRebirthed;
+    }
+
+    updateGame();
+  </script>
+</body>
+</html>
